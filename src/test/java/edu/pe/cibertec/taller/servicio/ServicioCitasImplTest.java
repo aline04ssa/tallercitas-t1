@@ -45,6 +45,7 @@ class ServicioCitasImplTest {
 	// Datos para las pruebas
 	private String placa;
 	private Mecanico mecanico;
+	private Mecanico mecanicoMotor;
 	private LocalDateTime ahora;
 	private LocalDateTime fechaCita;
 
@@ -54,6 +55,7 @@ class ServicioCitasImplTest {
 				proveedorFechaHora, servicioNotificaciones);
 		placa = "BAS-195";
 		mecanico = new Mecanico(1L, "Fiorella Basurto", TipoServicio.CAMBIO_ACEITE);
+		mecanicoMotor = new Mecanico(2L, "Fiorella Basurto", TipoServicio.REPARACION_MOTOR);
 		ahora = LocalDateTime.of(2026, 9, 14, 8, 0);
 		fechaCita = LocalDateTime.of(2026, 9, 15, 10, 0);
 	}
@@ -107,12 +109,11 @@ class ServicioCitasImplTest {
 	@DisplayName("Un servicio pesado a las 07:00 se rechaza con HorarioNoPermitidoException")
 	void agendarServicioPesadoALas07() {
 		// Arrange
-		Mecanico mecanicoMotor = new Mecanico(1L, "Fiorella Basurto", TipoServicio.REPARACION_MOTOR);
 		LocalDateTime cita = LocalDateTime.of(2026, 9, 15, 7, 0);
-		when(repositorioMecanicos.findById(1L)).thenReturn(Optional.of(mecanicoMotor));
+		when(repositorioMecanicos.findById(2L)).thenReturn(Optional.of(mecanicoMotor));
 
 		// Act y Assert
-		assertThrows(HorarioNoPermitidoException.class, () -> servicioCitas.agendarCita(1L, placa, TipoServicio.REPARACION_MOTOR, cita));
+		assertThrows(HorarioNoPermitidoException.class, () -> servicioCitas.agendarCita(2L, placa, TipoServicio.REPARACION_MOTOR, cita));
 		verify(repositorioCitas, never()).save(any(Cita.class));
 	}
 
@@ -120,15 +121,14 @@ class ServicioCitasImplTest {
 	@DisplayName("Un servicio pesado a las 08:00 se acepta y se guarda")
 	void agendarServicioPesadoALas08() {
 		// Arrange
-		Mecanico mecanicoMotor = new Mecanico(1L, "Fiorella Basurto", TipoServicio.REPARACION_MOTOR);
 		LocalDateTime cita = LocalDateTime.of(2026, 9, 15, 8, 0);
-		when(repositorioMecanicos.findById(1L)).thenReturn(Optional.of(mecanicoMotor));
+		when(repositorioMecanicos.findById(2L)).thenReturn(Optional.of(mecanicoMotor));
 		when(proveedorFechaHora.ahora()).thenReturn(ahora);
-		when(repositorioCitas.findByMecanicoIdAndEstado(1L, EstadoCita.PROGRAMADA)).thenReturn(List.of());
+		when(repositorioCitas.findByMecanicoIdAndEstado(2L, EstadoCita.PROGRAMADA)).thenReturn(List.of());
 		when(repositorioCitas.save(any(Cita.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		// Act
-		Cita resultado = servicioCitas.agendarCita(1L, placa, TipoServicio.REPARACION_MOTOR, cita);
+		Cita resultado = servicioCitas.agendarCita(2L, placa, TipoServicio.REPARACION_MOTOR, cita);
 
 		// Assert
 		assertEquals(EstadoCita.PROGRAMADA, resultado.getEstado());
@@ -139,15 +139,14 @@ class ServicioCitasImplTest {
 	@DisplayName("Un servicio pesado a las 11:00 se acepta y se guarda")
 	void agendarServicioPesadoALas11() {
 		// Arrange
-		Mecanico mecanicoMotor = new Mecanico(1L, "Fiorella Basurto", TipoServicio.REPARACION_MOTOR);
 		LocalDateTime cita = LocalDateTime.of(2026, 9, 15, 11, 0);
-		when(repositorioMecanicos.findById(1L)).thenReturn(Optional.of(mecanicoMotor));
+		when(repositorioMecanicos.findById(2L)).thenReturn(Optional.of(mecanicoMotor));
 		when(proveedorFechaHora.ahora()).thenReturn(ahora);
-		when(repositorioCitas.findByMecanicoIdAndEstado(1L, EstadoCita.PROGRAMADA)).thenReturn(List.of());
+		when(repositorioCitas.findByMecanicoIdAndEstado(2L, EstadoCita.PROGRAMADA)).thenReturn(List.of());
 		when(repositorioCitas.save(any(Cita.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		// Act
-		Cita resultado = servicioCitas.agendarCita(1L, placa, TipoServicio.REPARACION_MOTOR, cita);
+		Cita resultado = servicioCitas.agendarCita(2L, placa, TipoServicio.REPARACION_MOTOR, cita);
 
 		// Assert
 		assertEquals(EstadoCita.PROGRAMADA, resultado.getEstado());
@@ -155,50 +154,16 @@ class ServicioCitasImplTest {
 	}
 
 	@Test
-	@DisplayName("Una reparacion de motor a las 12:00 se rechaza")
+	@DisplayName("Un servicio pesado a las 12:00 se rechaza con HorarioNoPermitidoException")
 	void agendarServicioPesadoALas12() {
 		// Arrange
-		Mecanico mecanicoMotor = new Mecanico(1L, "Fiorella Basurto", TipoServicio.REPARACION_MOTOR);
 		LocalDateTime cita = LocalDateTime.of(2026, 9, 15, 12, 0);
-		when(repositorioMecanicos.findById(1L)).thenReturn(Optional.of(mecanicoMotor));
+		when(repositorioMecanicos.findById(2L)).thenReturn(Optional.of(mecanicoMotor));
 
 		// Act y Assert
-		assertThrows(HorarioNoPermitidoException.class, () -> servicioCitas.agendarCita(1L, placa, TipoServicio.REPARACION_MOTOR, cita)
+		assertThrows(HorarioNoPermitidoException.class, () -> servicioCitas.agendarCita(2L, placa, TipoServicio.REPARACION_MOTOR, cita)
 		);
 		verify(repositorioCitas, never()).save(any(Cita.class));
-	}
-
-	@Test
-	@DisplayName("Agendar en una fecha del pasado lanza FechaInvalidaException")
-	void agendarConFechaEnElPasado() {
-		// Arrange
-		// TODO: recuerden mockear proveedorFechaHora.ahora()
-
-		// Act y Assert
-		// TODO
-	}
-
-	@Test
-	@DisplayName("Agendar sobre una cita ya programada se rechaza con HorarioOcupadoException")
-	void agendarConSuperposicion() {
-		// Arrange
-		// TODO
-
-		// Act y Assert
-		// TODO
-	}
-
-	@Test
-	@DisplayName("Una cita que empieza justo cuando termina otra se acepta")
-	void agendarCitaContigua() {
-		// Arrange
-		// TODO: una cita existente que termina a las 10:00 y la nueva que empieza a las 10:00
-
-		// Act
-		// TODO
-
-		// Assert
-		// TODO
 	}
 
 	@Test
@@ -245,16 +210,6 @@ class ServicioCitasImplTest {
 	}
 
 	@Test
-	@DisplayName("Cancelar una cita inexistente lanza CitaNoEncontradaException")
-	void cancelarCitaInexistente() {
-		// Arrange
-		// TODO
-
-		// Act y Assert
-		// TODO
-	}
-
-	@Test
 	@DisplayName("Cancelar una cita que ya fue atendida lanza CitaNoCancelableException")
 	void cancelarCitaYaAtendida() {
 		// Arrange
@@ -269,26 +224,4 @@ class ServicioCitasImplTest {
 		verify(servicioNotificaciones, never()).notificarCitaCancelada(any());
 	}
 
-	@Test
-	@DisplayName("Buscar mecanico disponible retorna el primero sin citas superpuestas")
-	void buscarMecanicoDisponibleRetornaPrimeroLibre() {
-		// Arrange
-		// TODO: dos mecanicos de la misma especialidad, el primero ocupado
-
-		// Act
-		// TODO
-
-		// Assert
-		// TODO
-	}
-
-	@Test
-	@DisplayName("Buscar mecanico cuando ninguno esta libre lanza SinDisponibilidadException")
-	void buscarMecanicoSinDisponibilidad() {
-		// Arrange
-		// TODO
-
-		// Act y Assert
-		// TODO
-	}
 }

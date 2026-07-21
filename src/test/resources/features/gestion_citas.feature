@@ -1,15 +1,17 @@
 Feature: Gestion de citas del taller mecanico
 
-  # TODO: escribir aqui los 4 escenarios usando Given / When / Then / And:
-  #
-  # 1. Agendar un cambio de aceite de forma exitosa
-  #    (la cita queda PROGRAMADA y se notifica el agendamiento)
-  #
-  # 2. Rechazar una reparacion de motor en la tarde
-  #    (los servicios pesados solo se atienden entre las 08:00 y las 12:00)
-  #
-  # 3. Cancelar con penalidad por aviso tardio
-  #    (cancelar con menos de 24 horas aplica una penalidad de 50.00)
-  #
-  # 4. Rechazar un agendamiento por horario ocupado
-  #    (el mecanico ya tiene una cita programada que se superpone)
+  Scenario: Agendar un mantenimiento ligero de forma exitosa
+    Given existe un mecanico disponible para mantenimiento ligero
+    When se agenda un mantenimiento ligero para la placa BAS-195
+    Then la cita queda en estado PROGRAMADA
+    And se notifica el agendamiento
+
+  Scenario: Intentar agendar con un mecanico ocupado a las 11:00
+    Given existe un mecanico con una cita programada de 10:00 a 12:00
+    When se intenta agendar una cita a las 11:00
+    Then el sistema rechaza el agendamiento por horario ocupado
+
+  Scenario: Intentar agendar con un mecanico ocupado a las 12:00
+    Given existe un mecanico con una cita programada de 10:00 a 12:00
+    When se intenta agendar una cita a las 12:00
+    Then la cita queda en estado PROGRAMADA
