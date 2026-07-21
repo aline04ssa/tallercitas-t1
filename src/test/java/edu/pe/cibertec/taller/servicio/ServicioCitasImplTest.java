@@ -1,5 +1,11 @@
 package edu.pe.cibertec.taller.servicio;
 
+import edu.pe.cibertec.taller.excepcion.EspecialidadIncorrectaException;
+import edu.pe.cibertec.taller.excepcion.MecanicoNoEncontradoException;
+import edu.pe.cibertec.taller.modelo.Cita;
+import edu.pe.cibertec.taller.modelo.EstadoCita;
+import edu.pe.cibertec.taller.modelo.Mecanico;
+import edu.pe.cibertec.taller.modelo.TipoServicio;
 import edu.pe.cibertec.taller.repositorio.RepositorioCitas;
 import edu.pe.cibertec.taller.repositorio.RepositorioMecanicos;
 import edu.pe.cibertec.taller.servicio.impl.ServicioCitasImpl;
@@ -11,6 +17,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class ServicioCitasImplTest {
@@ -29,44 +43,65 @@ class ServicioCitasImplTest {
 
 	private ServicioCitasImpl servicioCitas;
 
+	// Datos para las pruebas
+	private String placa;
+	private Mecanico mecanico;
+	private LocalDateTime ahora;
+	private LocalDateTime fechaCita;
+
 	@BeforeEach
 	void inicializar() {
 		servicioCitas = new ServicioCitasImpl(repositorioMecanicos, repositorioCitas,
 				proveedorFechaHora, servicioNotificaciones);
-		// TODO: crear aqui los datos comunes que necesiten los tests
+		placa = "BAS-195";
+		mecanico = new Mecanico(1L, "Fiorella Basurto", TipoServicio.CAMBIO_ACEITE);
+		ahora = LocalDateTime.of(2026, 9, 14, 8, 0);
+		fechaCita = LocalDateTime.of(2026, 9, 15, 10, 0);
 	}
 
 	@Test
 	@DisplayName("Agendar una cita valida la guarda, notifica y la retorna en estado PROGRAMADA")
 	void agendarCitaExitosa() {
 		// Arrange
-		// TODO
+		when(repositorioMecanicos.findById(1L)).thenReturn(Optional.of(mecanico));
+		when(proveedorFechaHora.ahora()).thenReturn(ahora);
+		when(repositorioCitas.findByMecanicoIdAndEstado(1L, EstadoCita.PROGRAMADA)).thenReturn(List.of());
+		when(repositorioCitas.save(any(Cita.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
 		// Act
-		// TODO
+		Cita resultado = servicioCitas.agendarCita(1L, placa, TipoServicio.CAMBIO_ACEITE, fechaCita);
 
 		// Assert
-		// TODO: verificar estado, duracion, save y notificacion
+		assertEquals(EstadoCita.PROGRAMADA, resultado.getEstado());
+		assertEquals(1, resultado.getDuracionHoras());
+		verify(repositorioCitas, times(1)).save(any(Cita.class));
+		verify(servicioNotificaciones, times(1)).notificarCitaAgendada(resultado);
 	}
 
 	@Test
 	@DisplayName("Agendar con un mecanico inexistente lanza MecanicoNoEncontradoException")
 	void agendarConMecanicoInexistente() {
 		// Arrange
-		// TODO
+		when(repositorioMecanicos.findById(99L)).thenReturn(Optional.empty());
 
 		// Act y Assert
-		// TODO
+		assertThrows(MecanicoNoEncontradoException.class, () -> servicioCitas.agendarCita(99L, placa,
+				TipoServicio.CAMBIO_ACEITE, fechaCita)
+		);
+		verify(repositorioCitas, never()).save(any(Cita.class));
 	}
 
 	@Test
 	@DisplayName("Agendar cuando la especialidad no coincide lanza EspecialidadIncorrectaException")
 	void agendarConEspecialidadIncorrecta() {
 		// Arrange
-		// TODO
+		when(repositorioMecanicos.findById(1L)).thenReturn(Optional.of(mecanico));
 
 		// Act y Assert
-		// TODO
+		assertThrows(EspecialidadIncorrectaException.class, () -> servicioCitas.agendarCita(1L,
+				placa, TipoServicio.REPARACION_MOTOR, fechaCita)
+		);
+		verify(repositorioCitas, never()).save(any(Cita.class));
 	}
 
 	@Test
